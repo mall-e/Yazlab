@@ -30,12 +30,42 @@ class _SelectionScreenState extends State<SelectionScreen> {
               ),
             ],
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              AnimatedButton(title: "Yönetici"),
-              AnimatedButton(title: "Hoca"),
-              AnimatedButton(title: "Öğrenci"),
+              Container(
+                alignment: Alignment.center,
+                width: MediaQuery.of(context).size.width * 0.5,
+                height: MediaQuery.of(context).size.height * 0.1,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 10,
+                      offset: Offset(0, 5),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: Colors.black, // Kenar rengi
+                    width: 0.5, // Kenar kalınlığı
+                  ),
+                ),
+                child: Text(
+                  "Yazlab",
+                  style: TextStyle(fontSize: 20.0),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  AnimatedButton(title: "Yönetici"),
+                  AnimatedButton(title: "Hoca"),
+                  AnimatedButton(title: "Öğrenci"),
+                ],
+              ),
             ],
           ),
         ),

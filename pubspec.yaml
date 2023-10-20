@@ -32,6 +32,12 @@ dependencies:
     sdk: flutter
   moor:
   postgres:
+  file_picker:
+  http:
+  http_parser:
+  pdf_render:
+  flutter_tesseract_ocr:
+  path_provider:
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -61,8 +67,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
+  assets:
+    - assets/tessdata/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
