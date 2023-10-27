@@ -19,7 +19,6 @@ class StudentScreen extends StatefulWidget {
 }
 
 class _StudentScreenState extends State<StudentScreen> {
-  final VisionHelper visionHelper = VisionHelper('AIzaSyDGTlky1fr7fZqagelK8JAAcl44f2hjxYU');
   Widget page = Center(child: CircularProgressIndicator(),);
   String ocrResult = "";
 
@@ -27,7 +26,6 @@ class _StudentScreenState extends State<StudentScreen> {
   @override
   void initState() {
     page = first();
-    visionHelper.initialize();
     super.initState();
   }
 
