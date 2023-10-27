@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:yazlab/classification.dart';
 import 'package:yazlab/loginscreen.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
@@ -17,8 +19,17 @@ class StudentScreen extends StatefulWidget {
 }
 
 class _StudentScreenState extends State<StudentScreen> {
+  final VisionHelper visionHelper = VisionHelper('AIzaSyDGTlky1fr7fZqagelK8JAAcl44f2hjxYU');
+  Widget page = Center(child: CircularProgressIndicator(),);
+  String ocrResult = "";
 
-  Widget page = Center(child: Text("deneme"),);
+
+  @override
+  void initState() {
+    page = first();
+    visionHelper.initialize();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +106,32 @@ class _StudentScreenState extends State<StudentScreen> {
     );
   }
 
+  Future<void> _doOCR(File file) async {
+
+    final data = await file.readAsBytes();
+  final name = file.path.split('/').last;
+  final mpfile = http.MultipartFile.fromBytes(
+    'file',
+    data,
+    filename: name,
+    contentType: MediaType('application', 'pdf'),
+  );
+
+  // OCR isteğini gönder
+  final url = 'http://localhost:5000/ocr';  // Sunucunuzun URL'sini doğru şekilde ayarladığınızdan emin olun
+  final request = http.MultipartRequest('POST', Uri.parse(url))
+    ..files.add(mpfile);
+  final response = await request.send();
+  if (response.statusCode == 200) {
+    final responseData = await response.stream.bytesToString();
+    final Map<String, dynamic> resultData = json.decode(responseData);
+    ocrResult = resultData['text'];
+    print('OCR Result: $ocrResult');
+  } else {
+    print('Failed to perform OCR.');
+  }
+    }
+
   Future<File?> pickTranscriptFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -119,14 +156,14 @@ class _StudentScreenState extends State<StudentScreen> {
                 File? file = await pickTranscriptFile();
                 if (file != null) {
                   // Dosya seçildiyse OCR işlevini çağır
-                  List<Uint8List> extractedText =
-                      await convertPdfToImages(file);
-                  if (extractedText != null) {
-                    String fulltext = await extractTextFromImage(extractedText);
-                    print(fulltext);
+                  _doOCR(file).then((_) {
+                     setState(() {
+                      page = DataTableScreen(ocrResult: ocrResult,);
+                    });
+                  });
+                  //await visionHelper.performOcr(file);
                   } else print("ananı!");
-                }
-              },
+                },
               child: Text('Transkript Seç'),
             )
           ],
@@ -173,31 +210,43 @@ class _DenemeState extends State<Deneme> {
   }
 }
 
+class DataTableScreen extends StatefulWidget {
 
+  final String ocrResult;
 
+  const DataTableScreen({ Key? key ,this.ocrResult = ""}) : super(key: key);
 
-  // Future<String?> extractTextFromPdf(File file, String apiKey) async {
-  //   final request = http.MultipartRequest(
-  //     'POST',
-  //     Uri.parse('https://vision.googleapis.com/v1/images:annotate?key=$apiKey'),
-  //   );
+  @override
+  _DataTableScreenState createState() => _DataTableScreenState();
+}
 
-  //   request.files.add(http.MultipartFile.fromBytes(
-  //     'file',
-  //     file.readAsBytesSync(),
-  //     filename: file.path.split("/").last,
-  //     contentType: MediaType('application', 'pdf'),
-  //   ));
+class _DataTableScreenState extends State<DataTableScreen> {
 
-  //   final response = await request.send();
+  Classification values = Classification();
 
-  //   if (response.statusCode == 200) {
-  //     final result = await http.Response.fromStream(response);
-  //     // Burada, result.body'den gelen veriyi parse ederek metni çıkarabilirsiniz.
-  //     // Örnek olarak, sadece raw metni döndürüyorum:
-  //     return result.body;
-  //   } else {
-  //     print('OCR işlemi başarısız oldu: ${response.reasonPhrase}');
-  //     return null;
-  //   }
-  // }
+  @override
+  Widget build(BuildContext context) {
+    values.fillValues(widget.ocrResult);
+    return Container(
+      alignment: Alignment.center,
+      child: DataTable(
+        columns: [
+          DataColumn(label: Text("UK")),
+          DataColumn(label: Text("AKTS")),
+          DataColumn(label: Text("Not")),
+          DataColumn(label: Text("Puan")),
+          DataColumn(label: Text("Açıklama"))
+        ],
+        rows: [
+          DataRow(cells: [
+            DataCell(Text(values.uk)),
+            DataCell(Text(values.akts)),
+            DataCell(Text(values.grade)),
+            DataCell(Text(values.points)),
+            DataCell(Text(values.comment)),
+          ])
+        ],
+      ),
+    );
+  }
+}
