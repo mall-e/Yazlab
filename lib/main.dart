@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:postgres/postgres.dart';
 import 'package:yazlab/loginscreen.dart';
-
 final connection = PostgreSQLConnection(
   'localhost', // Sunucu adresi
   5432, // Port numarası

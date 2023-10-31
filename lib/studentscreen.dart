@@ -9,7 +9,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:yazlab/ocr.dart';
-
+import 'package:yazlab/screentemplate.dart';
 
 class StudentScreen extends StatefulWidget {
   const StudentScreen({Key? key}) : super(key: key);
@@ -19,9 +19,10 @@ class StudentScreen extends StatefulWidget {
 }
 
 class _StudentScreenState extends State<StudentScreen> {
-  Widget page = Center(child: CircularProgressIndicator(),);
+  Widget page = Center(
+    child: CircularProgressIndicator(),
+  );
   String ocrResult = "";
-
 
   @override
   void initState() {
@@ -31,104 +32,51 @@ class _StudentScreenState extends State<StudentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 189, 189, 189),
-      appBar: AppBar(
-        actions: [
-          IconButton(
-              onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => SelectionScreen()));
-              },
-              icon: Icon(Icons.logout))
-        ],
+    return ScreenTemplate(buttons: const [
+      Icon(
+        Icons.home,
+        color: Colors.white,
       ),
-      body: Center(
-        child:
-        Row(
-        children: [
-          // Sol tarafta yer alan özel navbar
-          Padding(
-            padding: const EdgeInsets.all(15.0),
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.1,
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(25.0),
-                boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      spreadRadius: 1,
-                      blurRadius: 10,
-                      offset: Offset(0, 5),
-                    ),
-                  ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.home, color: Colors.white,),
-                    onPressed: () {
-                      setState(() {
-                        page = first();
-                      });
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.search, color: Colors.white,),
-                    onPressed: () {
-                      setState(() {
-                        page = second();
-                      });
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.settings, color: Colors.white,),
-                    onPressed: () {
-                      setState(() {
-                        page = Deneme();
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          page
-
-        ],
+      Icon(
+        Icons.search,
+        color: Colors.white,
       ),
-
-      ),
-    );
+      Icon(
+        Icons.settings,
+        color: Colors.white,
+      )
+    ], pages: {
+      0: first(),
+      1: second(),
+      2: Deneme(),
+    });
   }
 
   Future<void> _doOCR(File file) async {
-
     final data = await file.readAsBytes();
-  final name = file.path.split('/').last;
-  final mpfile = http.MultipartFile.fromBytes(
-    'file',
-    data,
-    filename: name,
-    contentType: MediaType('application', 'pdf'),
-  );
+    final name = file.path.split('/').last;
+    final mpfile = http.MultipartFile.fromBytes(
+      'file',
+      data,
+      filename: name,
+      contentType: MediaType('application', 'pdf'),
+    );
 
-  // OCR isteğini gönder
-  final url = 'http://localhost:5000/ocr';  // Sunucunuzun URL'sini doğru şekilde ayarladığınızdan emin olun
-  final request = http.MultipartRequest('POST', Uri.parse(url))
-    ..files.add(mpfile);
-  final response = await request.send();
-  if (response.statusCode == 200) {
-    final responseData = await response.stream.bytesToString();
-    final Map<String, dynamic> resultData = json.decode(responseData);
-    ocrResult = resultData['text'];
-    print('OCR Result: $ocrResult');
-  } else {
-    print('Failed to perform OCR.');
-  }
+    // OCR isteğini gönder
+    final url =
+        'http://localhost:5000/ocr'; // Sunucunuzun URL'sini doğru şekilde ayarladığınızdan emin olun
+    final request = http.MultipartRequest('POST', Uri.parse(url))
+      ..files.add(mpfile);
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      final responseData = await response.stream.bytesToString();
+      final Map<String, dynamic> resultData = json.decode(responseData);
+      ocrResult = resultData['text'];
+      print('OCR Result: $ocrResult');
+    } else {
+      print('Failed to perform OCR.');
     }
+  }
 
   Future<File?> pickTranscriptFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -145,39 +93,43 @@ class _StudentScreenState extends State<StudentScreen> {
     }
   }
 
-
-  Widget first () => Column(
-          children: [
-            Text("Öğrenci ekranına hoşgeldiniz!"),
-            ElevatedButton(
-              onPressed: () async {
-                File? file = await pickTranscriptFile();
-                if (file != null) {
-                  // Dosya seçildiyse OCR işlevini çağır
-                  _doOCR(file).then((_) {
-                     setState(() {
-                      page = DataTableScreen(ocrResult: ocrResult,);
-                    });
+  Widget first() => Column(
+        children: [
+          Text("Öğrenci ekranına hoşgeldiniz!"),
+          ElevatedButton(
+            onPressed: () async {
+              File? file = await pickTranscriptFile();
+              if (file != null) {
+                // Dosya seçildiyse OCR işlevini çağır
+                _doOCR(file).then((_) {
+                  setState(() {
+                    page = DataTableScreen(
+                      ocrResult: ocrResult,
+                    );
                   });
-                  //await visionHelper.performOcr(file);
-                  } else print("ananı!");
-                },
-              child: Text('Transkript Seç'),
-            )
-          ],
-        );
+                });
+                //await visionHelper.performOcr(file);
+              } else
+                print("ananı!");
+            },
+            child: Text('Transkript Seç'),
+          )
+        ],
+      );
 
-  Widget second() => Center(child: Container(
-    alignment: Alignment.center ,
-    width: MediaQuery.of(context).size.width * 0.5,
-    height: MediaQuery.of(context).size.height * 0.5,
-    color: Colors.pink,
-    child: Text("gürkan burası ikinci yazan yer!"),),);
+  Widget second() => Center(
+        child: Container(
+          alignment: Alignment.center,
+          width: MediaQuery.of(context).size.width * 0.5,
+          height: MediaQuery.of(context).size.height * 0.5,
+          color: Colors.pink,
+          child: Text("gürkan burası ikinci yazan yer!"),
+        ),
+      );
 }
 
-
 class Deneme extends StatefulWidget {
-  const Deneme({ Key? key }) : super(key: key);
+  const Deneme({Key? key}) : super(key: key);
 
   @override
   _DenemeState createState() => _DenemeState();
@@ -187,7 +139,8 @@ class _DenemeState extends State<Deneme> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 15.0, left: 10.0, right: 10.0, bottom: 15.0),
+      padding: const EdgeInsets.only(
+          top: 15.0, left: 10.0, right: 10.0, bottom: 15.0),
       child: Container(
         width: MediaQuery.of(context).size.width * 0.83,
         height: MediaQuery.of(context).size.height * 0.9,
@@ -195,13 +148,13 @@ class _DenemeState extends State<Deneme> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(20.0),
           boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      spreadRadius: 1,
-                      blurRadius: 10,
-                      offset: Offset(0, 5),
-                    ),
-                  ],
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              spreadRadius: 1,
+              blurRadius: 10,
+              offset: Offset(0, 5),
+            ),
+          ],
         ),
       ),
     );
@@ -209,17 +162,15 @@ class _DenemeState extends State<Deneme> {
 }
 
 class DataTableScreen extends StatefulWidget {
-
   final String ocrResult;
 
-  const DataTableScreen({ Key? key ,this.ocrResult = ""}) : super(key: key);
+  const DataTableScreen({Key? key, this.ocrResult = ""}) : super(key: key);
 
   @override
   _DataTableScreenState createState() => _DataTableScreenState();
 }
 
 class _DataTableScreenState extends State<DataTableScreen> {
-
   Classification values = Classification();
 
   @override
@@ -246,5 +197,47 @@ class _DataTableScreenState extends State<DataTableScreen> {
         ],
       ),
     );
+  }
+}
+
+class Ogrencisayfasi extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+        child: Container(
+      width: MediaQuery.of(context).size.width * 0.8,
+      child: DataTable(
+        columns: [
+          DataColumn(label: Text('Ders Adı')),
+          DataColumn(label: Text('Hocalar')),
+          DataColumn(label: Text('Mesajlaşma')),
+        ],
+        rows: [
+          _createDataRow('Matematik', 'Prof. Dr. Ahmet', 'Doç. Dr. Ayşe'),
+          _createDataRow('Fizik', 'Prof. Dr. Mehmet', 'Doç. Dr. Fatma'),
+          // Diğer dersler ve hocalar buraya eklenebilir.
+        ],
+      ),
+    ));
+  }
+
+  DataRow _createDataRow(String dersAdi, String hoca1, String hoca2) {
+    return DataRow(cells: [
+      DataCell(Text(dersAdi)),
+      DataCell(Row(
+        children: [
+          ElevatedButton(onPressed: () {}, child: Text(hoca1)),
+          SizedBox(width: 8),
+          ElevatedButton(onPressed: () {}, child: Text(hoca2)),
+        ],
+      )),
+      DataCell(Row(
+        children: [
+          ElevatedButton(onPressed: () {}, child: Text('Mesaj Gönder')),
+          SizedBox(width: 8),
+          ElevatedButton(onPressed: () {}, child: Text('Mesaj Gönder')),
+        ],
+      )),
+    ]);
   }
 }

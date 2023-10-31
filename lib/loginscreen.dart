@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yazlab/professorscreen.dart';
 import 'package:yazlab/sqloperations.dart';
 import 'package:yazlab/studentscreen.dart';
 
@@ -270,7 +271,11 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
                     setState(() {
                       _loginCheck = true;
                     });
-                  } else {
+                  }
+                  if (isloggedin && widget.title == "Hoca") {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => ProfessorScreen()));
+                  }
+                  else {
                     setState(() {
                       _loginCheck = false;
                     });
