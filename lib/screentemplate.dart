@@ -73,3 +73,40 @@ class _ScreenTemplateState extends State<ScreenTemplate> {
     );
   }
 }
+
+
+class UITemplate extends StatefulWidget {
+
+  final Widget page;
+  const UITemplate({Key? key, required this.page}) : super(key: key);
+
+  @override
+  _UITemplateState createState() => _UITemplateState();
+}
+
+class _UITemplateState extends State<UITemplate> {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(
+          top: 15.0, left: 10.0, right: 10.0, bottom: 15.0),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.83,
+        height: MediaQuery.of(context).size.height * 0.9,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              spreadRadius: 1,
+              blurRadius: 10,
+              offset: Offset(0, 5),
+            ),
+          ],
+        ),
+        child: widget.page,
+      ),
+    );
+  }
+}
