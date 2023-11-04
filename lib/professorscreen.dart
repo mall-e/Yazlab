@@ -1,17 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:postgres/postgres.dart';
+import 'package:provider/provider.dart';
+import 'package:yazlab/chatscreen.dart';
+import 'package:yazlab/professor.dart';
+import 'package:yazlab/requests.dart';
 import 'package:yazlab/screentemplate.dart';
 import 'package:yazlab/sqloperations.dart';
 
 class ProfessorScreen extends StatefulWidget {
-  const ProfessorScreen({Key? key}) : super(key: key);
+  final String loginType;
+  final String username;
+
+  const ProfessorScreen({Key? key, required this.loginType, required this.username}) : super(key: key);
 
   @override
   _ProfessorScreenState createState() => _ProfessorScreenState();
 }
 
+
 class _ProfessorScreenState extends State<ProfessorScreen> {
   @override
   Widget build(BuildContext context) {
+    final professor = Provider.of<Professor>(context, listen: false);
+    professor.fetchFromDatabase(widget.username);
     return ScreenTemplate(
       buttons: [
         Icon(
@@ -29,7 +40,7 @@ class _ProfessorScreenState extends State<ProfessorScreen> {
       ],
       pages: {
         0: InterestPage(),
-        1: MyApp(),
+        1: RequestsPage(widget.username),
         2: InterestPage(),
       },
     );
@@ -86,15 +97,17 @@ class InterestPage extends StatelessWidget {
 }
 
 
-class MyApp extends StatelessWidget {
+class RequestsPage extends StatelessWidget {
+  final String username;
+  RequestsPage(this.username);
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'Öğrenci Talep Uygulaması',
+      debugShowCheckedModeBanner: false,
       home: UITemplate(
         page: DefaultTabController(
-          length: 2, // İki sekme olacak
+          length: 2,
           child: Scaffold(
             appBar: AppBar(
               title: Text('Öğrenci Talepleri'),
@@ -107,7 +120,7 @@ class MyApp extends StatelessWidget {
             ),
             body: TabBarView(
               children: [
-                StudentRequestList(),
+                StudentRequestList(username),
                 RequestFormPage(),
               ],
             ),
@@ -119,25 +132,132 @@ class MyApp extends StatelessWidget {
 }
 
 class StudentRequestList extends StatefulWidget {
-  List<String> studentRequests = ["zort", "zart"];
+  final String username;
 
+  StudentRequestList(this.username);
   @override
   _StudentRequestListState createState() => _StudentRequestListState();
 }
 
 class _StudentRequestListState extends State<StudentRequestList> {
+  List<String> studentRequests = [];
+  List<String> studentCourseRequests = [];
+  List<String> professorRequestsId = [];
+  List<Map<String, dynamic>> students = [];
+  List<Map<String, dynamic>> professors = [];
+  bool isLoading = true;
+  final connection = connect();
+
+  @override
+  void initState() {
+    super.initState();
+    init();
+  }
+
+  Future<void> init() async {
+    await connection.open();
+    await fetchStudentRequests();
+    await fetchStudents();
+    setState(() {
+      isLoading = false;
+    });
+    await connection.close();
+  }
+
+  Future<void> fetchStudentRequests() async {
+    final result = await connection.query('SELECT * FROM requests');
+
+    setState(() {
+      professorRequestsId = result.map((row) => row[0].toString()).toList();
+      studentRequests = result.map((row) => row[1].toString()).toList();
+      studentCourseRequests = result.map((row) => row[2].toString()).toList();
+    });
+  }
+
+  Future<void> fetchStudents() async {
+
+    for (String studentId in studentRequests) {
+      final result = await connection.query(
+        'SELECT * FROM ogrenciler WHERE student_id = @student_id',
+        substitutionValues: {
+          'student_id': studentId,
+        },
+      );
+
+      if (result.isNotEmpty) {
+        students.add(result.first.toColumnMap());
+      }
+    }
+
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: widget.studentRequests.length,
-      itemBuilder: (context, index) {
-        return ListTile(
-          title: Text(widget.studentRequests[index]),
+    if (isLoading) {
+      return CircularProgressIndicator();
+    }
+
+    return FutureBuilder<List<Request>>(
+      future: Request.fetchAllRequests(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return CircularProgressIndicator();
+        }
+        return ListView.builder(
+          itemCount: professorRequestsId.length,
+          itemBuilder: (context, index) {
+            var request = snapshot.data![index];
+            final student = students[index];
+            final professor = Provider.of<Professor>(context, listen: false);
+            if (professorRequestsId[index] !=  professor.id.toString() ) {
+              return SizedBox.shrink();
+            }
+            return Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10.0),
+                color: request.status == 0 ? Colors.white: Colors.green,
+                  boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.5), // Gölgenin rengi
+                    spreadRadius: 5, // Gölgenin yayılma yarıçapı
+                    blurRadius: 7, // Gölgenin bulanıklık yarıçapı
+                    offset: Offset(0, 3), // Gölgenin yatay ve dikey pozisyonu
+                  ),
+                ],
+                ),
+                child: ListTile(
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(student['username']),
+                      Text(studentCourseRequests[index]),
+                      Row(
+                        children: [
+                          ElevatedButton(onPressed: ()async{await request.updateStatus(0); setState(() {
+
+                          });}, child: Icon(Icons.close, size: 18.0,)),
+                          SizedBox(width: 10.0,),
+                          ElevatedButton(onPressed: ()async{await request.updateStatus(1); setState(() {
+
+                          });}, child: Icon(Icons.check, size: 18.0,)),
+                          SizedBox(width: 10.0,),
+                          ElevatedButton(onPressed: (){showDialog(context: context, builder: ((context) => ChatScreen(student_id: int.parse(studentRequests[index]))));}, child: Icon(Icons.message, size: 18.0,)),
+                        ],
+                      )
+                    ],
+                  ), // 'name' sütun isminizi buraya yazın
+                ),
+              ),
+            );
+          },
         );
-      },
+      }
     );
   }
 }
+
 
 class RequestFormPage extends StatefulWidget {
   @override
@@ -147,12 +267,11 @@ class RequestFormPage extends StatefulWidget {
 class _RequestFormPageState extends State<RequestFormPage> {
   final TextEditingController requestController = TextEditingController();
 
-  void _submitRequest() {
+  void _submitRequest() async {
     String requestText = requestController.text;
     if (requestText.isNotEmpty) {
-      setState(() {
-        StudentRequestList().studentRequests.add(requestText);
-      });
+      // Talebi gönderme kodu buraya ekleyin (PostgreSQL veya başka bir veritabanına).
+      // Örnek: await sendRequestToPostgreSQL(requestText);
       requestController.clear();
     }
   }

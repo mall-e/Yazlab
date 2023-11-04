@@ -15,13 +15,17 @@ class ScreenTemplate extends StatefulWidget {
 }
 
 class _ScreenTemplateState extends State<ScreenTemplate> {
-  late Widget page;
+  int selectedIndex = 0;
 
   @override
   void initState() {
-    // Varsayılan olarak ilk sayfayı göster
-    page = widget.pages[0] ?? Center(child: Text("Sayfa bulunamadı!"));
     super.initState();
+  }
+
+  void _changePage(int index) {
+    setState(() {
+      selectedIndex = index;
+    });
   }
 
   @override
@@ -29,25 +33,26 @@ class _ScreenTemplateState extends State<ScreenTemplate> {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 189, 189, 189),
       appBar: AppBar(
-        // AppBar ayarlarınız...
-      ),
+          // AppBar ayarlarınız...
+          ),
       body: Row(
         children: [
           // Sol tarafta yer alan özel navbar
           Padding(
-            padding: const EdgeInsets.only(top: 15.0, bottom: 15.0, left: 15.0, right: 7.0),
+            padding: const EdgeInsets.only(
+                top: 15.0, bottom: 15.0, left: 15.0, right: 7.0),
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.black,
                 borderRadius: BorderRadius.circular(25.0),
                 boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      spreadRadius: 1,
-                      blurRadius: 10,
-                      offset: Offset(0, 5),
-                    ),
-                  ],
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    spreadRadius: 1,
+                    blurRadius: 10,
+                    offset: Offset(0, 5),
+                  ),
+                ],
               ),
               width: MediaQuery.of(context).size.width * 0.1,
               child: Column(
@@ -58,25 +63,34 @@ class _ScreenTemplateState extends State<ScreenTemplate> {
                     icon: widget.buttons[index],
                     color: Colors.white,
                     onPressed: () {
-                      setState(() {
-                        page = widget.pages[index] ?? Center(child: Text("Sayfa bulunamadı!"));
-                      });
+                      _changePage(index);
                     },
                   ),
                 ),
               ),
             ),
           ),
-          Expanded(child: page),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  //scale: animation,
+                  child: child,
+                );
+              },
+              child: widget.pages[selectedIndex] ??
+                  Center(child: Text("Sayfa bulunamadı!")),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-
 class UITemplate extends StatefulWidget {
-
   final Widget page;
   const UITemplate({Key? key, required this.page}) : super(key: key);
 

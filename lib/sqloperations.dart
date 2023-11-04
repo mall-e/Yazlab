@@ -28,7 +28,7 @@ Future<bool> checkCredentials(String username, String password, String table) as
   }
 }
 
-Future<PostgreSQLConnection> connect() async {
+PostgreSQLConnection connect() {
     var connection = PostgreSQLConnection(
       'localhost',
       5432,
@@ -36,6 +36,5 @@ Future<PostgreSQLConnection> connect() async {
       username: 'postgres',
       password: 'password',
     );
-    await connection.open();
     return connection;
 }
