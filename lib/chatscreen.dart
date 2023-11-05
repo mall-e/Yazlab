@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yazlab/professor.dart';
 import 'package:yazlab/sqloperations.dart';
+import 'package:yazlab/student.dart';
 
 class ChatScreen extends StatefulWidget {
   final int student_id;
+  final int sender;
 
-  const ChatScreen({Key? key, required this.student_id}) : super(key: key);
+  const ChatScreen({Key? key, required this.student_id, required this.sender}) : super(key: key);
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -25,8 +27,11 @@ class _ChatScreenState extends State<ChatScreen> {
     // Burada fetchChatMessages fonksiyonunu çağırıyoruz ve sonucu bir Future'a atıyoruz.
     // Professor sınıfınızı ve kullanıcı kimliğini doğru şekilde sağladığınızdan emin olun.
     final professorId = Provider.of<Professor>(context, listen: false).id;
-    chatMessagesFuture =
-        fetchChatMessages(professorId, widget.student_id, true);
+    final studentId = Provider.of<Student>(context, listen: false).studentId;
+    chatMessagesFuture = widget.sender == 0
+      ? fetchChatMessages(professorId, widget.student_id, true)
+      : fetchChatMessages(professorId, widget.student_id, false);
+
   }
 
   @override
@@ -41,6 +46,7 @@ void dispose() {
   @override
   Widget build(BuildContext context) {
     final professor = Provider.of<Professor>(context, listen: false);
+    final student = Provider.of<Student>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
@@ -142,8 +148,15 @@ void dispose() {
                       ),
                       onPressed: () {
                         DateTime dateTime = DateTime.now();
-                        _sendMessage(professor.id, widget.student_id,
-                            _messageController.text, dateTime);
+                        if(widget.sender == 0){
+
+                          _sendMessage(professor.id, widget.student_id,
+                              _messageController.text, dateTime);
+                        }
+                        else{
+                          _sendMessage(widget.student_id, student.studentId,
+                              _messageController.text, dateTime);
+                        }
                       },
                     ),
                   ),

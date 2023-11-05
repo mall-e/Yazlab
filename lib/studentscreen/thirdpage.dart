@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yazlab/student.dart';
+import 'package:yazlab/studentscreen/studentrequestpage.dart';
 
 class ThirdPage extends StatefulWidget {
   const ThirdPage({ Key? key }) : super(key: key);
@@ -10,6 +13,7 @@ class ThirdPage extends StatefulWidget {
 class _ThirdPageState extends State<ThirdPage> {
   @override
   Widget build(BuildContext context) {
+    final student = Provider.of<Student>(context, listen: false);
     return Padding(
       padding: const EdgeInsets.only(
           top: 15.0, left: 10.0, right: 10.0, bottom: 15.0),
@@ -28,6 +32,7 @@ class _ThirdPageState extends State<ThirdPage> {
             ),
           ],
         ),
+        child: StudentRequestsPage(studentId: student.studentId),
       ),
     );
   }

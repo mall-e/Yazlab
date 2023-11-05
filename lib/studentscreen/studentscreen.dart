@@ -5,6 +5,7 @@ import 'package:yazlab/screentemplate.dart';
 import 'package:yazlab/student.dart';
 import 'package:yazlab/studentscreen/firstpage.dart';
 import 'package:yazlab/studentscreen/secondpage.dart';
+import 'package:yazlab/studentscreen/srequestscreen.dart';
 import 'package:yazlab/studentscreen/thirdpage.dart';
 import 'package:yazlab/transciprtrow.dart';
 
@@ -50,105 +51,24 @@ class _StudentScreenState extends State<StudentScreen> {
   student.fetchStudentFromDatabase(widget.username);
     return ChangeNotifierProvider(
       create: ((context) => PageModel()),
-      child: const ScreenTemplate(buttons: [
+      child: ScreenTemplate(buttons: [
         Icon(
-          Icons.home,
+          Icons.print_rounded,
           color: Colors.white,
         ),
         Icon(
-          Icons.search,
+          Icons.select_all,
           color: Colors.white,
         ),
         Icon(
-          Icons.settings,
+          Icons.request_quote,
           color: Colors.white,
         )
       ], pages: {
-        0: FirstPage(),
-        1: SecondPage(),
-        2: ThirdPage(),
+        0: const FirstPage(),
+        1: CoursesPage(),
+        2: const ThirdPage(),
       }),
     );
-  }
-}
-
-class DataTableScreen extends StatefulWidget {
-  final String ocrResult;
-
-  const DataTableScreen({Key? key, this.ocrResult = ""}) : super(key: key);
-
-  @override
-  _DataTableScreenState createState() => _DataTableScreenState();
-}
-
-class _DataTableScreenState extends State<DataTableScreen> {
-  Classification values = Classification();
-
-  @override
-  Widget build(BuildContext context) {
-    values.fillValues(widget.ocrResult);
-    return Container(
-      alignment: Alignment.center,
-      child: DataTable(
-        columns: [
-          DataColumn(label: Text("UK")),
-          DataColumn(label: Text("AKTS")),
-          DataColumn(label: Text("Not")),
-          DataColumn(label: Text("Puan")),
-          DataColumn(label: Text("Açıklama"))
-        ],
-        rows: [
-          DataRow(cells: [
-            DataCell(Text(values.uk)),
-            DataCell(Text(values.akts)),
-            DataCell(Text(values.grade)),
-            DataCell(Text(values.points)),
-            DataCell(Text(values.comment)),
-          ])
-        ],
-      ),
-    );
-  }
-}
-
-class Ogrencisayfasi extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-        child: Container(
-      width: MediaQuery.of(context).size.width * 0.8,
-      child: DataTable(
-        columns: [
-          DataColumn(label: Text('Ders Adı')),
-          DataColumn(label: Text('Hocalar')),
-          DataColumn(label: Text('Mesajlaşma')),
-        ],
-        rows: [
-          _createDataRow('Matematik', 'Prof. Dr. Ahmet', 'Doç. Dr. Ayşe'),
-          _createDataRow('Fizik', 'Prof. Dr. Mehmet', 'Doç. Dr. Fatma'),
-          // Diğer dersler ve hocalar buraya eklenebilir.
-        ],
-      ),
-    ));
-  }
-
-  DataRow _createDataRow(String dersAdi, String hoca1, String hoca2) {
-    return DataRow(cells: [
-      DataCell(Text(dersAdi)),
-      DataCell(Row(
-        children: [
-          ElevatedButton(onPressed: () {}, child: Text(hoca1)),
-          SizedBox(width: 8),
-          ElevatedButton(onPressed: () {}, child: Text(hoca2)),
-        ],
-      )),
-      DataCell(Row(
-        children: [
-          ElevatedButton(onPressed: () {}, child: Text('Mesaj Gönder')),
-          SizedBox(width: 8),
-          ElevatedButton(onPressed: () {}, child: Text('Mesaj Gönder')),
-        ],
-      )),
-    ]);
   }
 }

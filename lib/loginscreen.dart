@@ -4,6 +4,7 @@ import 'package:yazlab/professor.dart';
 import 'package:yazlab/professorscreen.dart';
 import 'package:yazlab/sqloperations.dart';
 import 'package:yazlab/studentscreen/studentscreen.dart';
+import 'package:yazlab/yonetici.dart';
 
 class SelectionScreen extends StatefulWidget {
   const SelectionScreen({Key? key}) : super(key: key);
@@ -275,7 +276,16 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
                     });
                   }
                   if (isloggedin && widget.title == "Hoca") {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => ProfessorScreen(loginType: "ogrenci", username: username.text)));
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => ProfessorScreen(loginType: "hoca", username: username.text)));
+                    setState(() {
+                      _loginCheck = true;
+                    });
+                  }
+                  if (isloggedin && widget.title == "Yönetici") {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => YoneticiScreen()));
+                    setState(() {
+                      _loginCheck = true;
+                    });
                   }
                   else {
                     setState(() {

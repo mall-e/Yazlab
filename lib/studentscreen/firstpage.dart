@@ -7,6 +7,7 @@ import 'package:yazlab/screentemplate.dart';
 import 'package:yazlab/studentscreen/databesops.dart';
 import 'package:yazlab/studentscreen/ocrandregex.dart';
 import 'package:yazlab/studentscreen/studentscreen.dart';
+import 'package:yazlab/studentscreen/transcriptpage.dart';
 import 'package:yazlab/transciprtrow.dart';
 
 class FirstPage extends StatefulWidget {
@@ -33,16 +34,15 @@ class _FirstPageState extends State<FirstPage> {
                   // Dosya seçildiyse OCR işlevini çağır
                   ocrResult = await doOCR(file);
                   setState(() {
-                      pageModel.page = DataTableScreen(
-                        ocrResult: ocrResult,
-                      );
                       row =  ayirVeTranscriptRowsOlustur(ocrResult);
                       print(row[0].not);
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => TranscriptPage(row)));
+                      pageModel.page = TranscriptPage(row);
                       insertTranscriptRows(row);
                       print(row[0]);
                     });
                 } else
-                  print("ananı!");
+                  print("sorun!");
               },
               child: Text('Transkript Seç'),
             ),

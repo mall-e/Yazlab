@@ -38,3 +38,22 @@ PostgreSQLConnection connect() {
     );
     return connection;
 }
+
+
+
+Future<void> addCoursesToProfessors() async {
+  var connection = connect();
+  await connection.open();
+
+ try {
+    // PostgreSQL'de oluşturduğunuz işlevi çağırın
+    await connection.query('SELECT add_courses_to_professors()');
+  } catch (e) {
+    // Hata oluşursa burada ele alın
+    print('An error occurred: $e');
+  } finally {
+    await connection.close(); // Bağlantınızı kapatın
+  }
+}
+
+
